@@ -1,0 +1,8 @@
+- name: bananna
+  type: food
+  description: Regular tasty bananna
+  weight: 2
+- name: turd
+  type: fule
+  description: Regular monkey turd
+  weight: 1

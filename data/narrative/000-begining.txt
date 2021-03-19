@@ -1,0 +1,13 @@
+ _______  _______  _______  ______    _______  __   __  _______  __    _  ___   _  _______  __   __
+|   _   ||       ||       ||    _ |  |       ||  |_|  ||       ||  |  | ||   | | ||       ||  | |  |
+|  |_|  ||  _____||_     _||   | ||  |   _   ||       ||   _   ||   |_| ||   |_| ||    ___||  |_|  |
+|       || |_____   |   |  |   |_||_ |  | |  ||       ||  | |  ||       ||      _||   |___ |       |
+|       ||_____  |  |   |  |    __  ||  |_|  ||       ||  |_|  ||  _    ||     |_ |    ___||_     _|
+|   _   | _____| |  |   |  |   |  | ||       || ||_|| ||       || | |   ||    _  ||   |___   |   |
+|__| |__||_______|  |___|  |___|  |_||_______||_|   |_||_______||_|  |__||___| |_||_______|  |___|
+AND THE GREAT BANANAPHAMON
+- A JoJo The Monkey Adventure
+
+The planet of Monkeytopia is suffering from a bananaphamon!  It is up to JoJo The Monkey to search the
+sourounding planet for bananas and bring them back to Monkeytopia.  Time is short!  JoJo must blast off
+quickly and save the day!
