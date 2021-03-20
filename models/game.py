@@ -1,39 +1,28 @@
 from .characters import JoJo
-from models.location import Location
+from models.area import Area
 from models.mechanics.battle import GroundBattle
+from models.objects.inventory import InvItem
 import yaml
+import pickle
 
 class Game:
 
     def __init__(self, player_name="JoJo"):
 
+        self. version = "0.1"
         self.player = JoJo(player_name)
         self.message = ""
         self.focus = "player"
 
-        self.locations = []
-
-        with open("data/map/01.yaml","r") as file:
-            yaml_locations = yaml.full_load(file.read())
-
-        location_row = []
-
-        for l in yaml_locations:
-            row_tracker = 0
-            if len(location_row) < 3:
-                location_row.append(Location(**l))
-            else:
-                self.locations.append(location_row)
-                location_row = []
-                location_row.append(Location(**l))
-
-        self.locations.append(location_row)
-
-        self.location = self.locations[0][0]
-        self.location_index1 = 0
-        self.location_index2 = 0
         self.mode = "normal"
         self.battle = None
+        self.warning = None
+
+        self.area = Area("spaceship")
+        self.areas_visited = []
+        self.areas_visited.append(self.area.id)
+        self.dump_area()
+        self.available_areas = ['01','spaceship']
 
     def parse_actions(self, action):
 
@@ -44,7 +33,7 @@ class Game:
                 actions.append(None)
             self.parse_player_actions(actions)
 
-        if self.focus == "battle":
+        elif self.focus == "battle":
             actions = action.split()
             missing = 6 - len(actions)
             for i in range(missing):
@@ -53,13 +42,13 @@ class Game:
 
     def battle_actions(self, action):
 
-        self.battle.player_action(action)
+        self.battle.run(action)
         if self.battle.over:
             self.focus = "player"
             self.mode = "normal"
-            self.location.enemies = self.battle.enemies
+            self.area.update_location(self.battle.location)
             self.player = self.battle.player
-            self.location.enemies = self.battle.enemies
+            self.warning = self.battle.get_battle_stats()
 
     def parse_player_actions(self, action):
 
@@ -67,7 +56,20 @@ class Game:
 
             self.player.fart()
             self.message = self.player.message
-
+        elif action[0] == "change":
+            if self.area.get_current_location().exit:
+                if action[1] == "area":
+                    if action[2] in self.available_areas:
+                        if action[2] in self.areas_visited:
+                            self.dump_area()
+                            self.load_area(action[2])
+                        else:
+                            self.dump_area()
+                            self.new_area(action[2])
+                    else:
+                        self.message = f"Area '{action[2]}' not available"
+            else:
+                self.message = "You cannt exit from this location."
         elif action[0] == "go":
             if action[1] == "to":
                 if action[2]:
@@ -87,7 +89,7 @@ class Game:
 
             if poop:
                 self.message = self.player.message
-                self.location.add_item(poop)
+                self.area.add_item(poop)
             else:
                 self.message = self.player.message
 
@@ -113,15 +115,17 @@ class Game:
                             self.message += (i.name + "\n")
 
             elif action[1] == "location":
-                self.message = self.location.description + "\n\n"
 
-                if len(self.location.enemies) > 0:
+                cur_loc = self.area.get_current_location()
+                self.message = cur_loc.description + "\n\n"
+
+                if len(cur_loc.enemies) > 0:
                     self.message += "Enemies!\n"
-                    for e in self.location.enemies:
+                    for e in cur_loc.enemies:
                         self.message += e.type + "\n"
 
                 else:
-                    for item in self.location.items:
+                    for item in cur_loc.items:
                         self.message += item.name + "\n"
 
             elif action[1] == None:
@@ -134,7 +138,7 @@ class Game:
             if action[1]:
                 dropped_item = self.player.drop(action[1])
                 if dropped_item:
-                    self.location.add_item(dropped_item)
+                    self.area.add_item(dropped_item)
                     self.message = self.player.message
                 else:
                     self.message = self.player.message
@@ -143,16 +147,21 @@ class Game:
 
         elif action[0] == "take":
 
-            for index,item in enumerate(self.location.items):
-                if action[1] == item.name:
-                    if self.validate_add_inventory(self.location.items[index]):
-                        self.location.items.remove(self.location.items[index])
-                        self.message = f"{item.name} taken!"
+            if action[1]:
+                item = self.area.remove_item(action[1])
+                if item:
+                    if self.player.add_item(item):
+                        self.message = f"{action[1]} taken."
+                        return
                     else:
-                        self.message = "You are carying too much!  Throw some things out!"
+                        self.message = self.player.message
+                        return
+                else:
+                    self.message = self.area.message
                     return
-
-            self.message = f"Cant seem to take {action[1]}"
+            else:
+                self.message = "NO ITEM SPECIFIED"
+                return
 
         elif action[0] == None:
             self.message = "no input..."
@@ -169,69 +178,41 @@ class Game:
 
     def goto(self, new_location):
 
-        found = False
-
-        for index1, row in enumerate(self.locations):
-            for index2, location in enumerate(row):
-                if new_location.upper() == location.name.upper():
-                    found = True
-                    if self.locations[index1][index2] in self.check_adj_locations():
-                        self.locations[self.location_index1][self.location_index2] = self.location
-                        self.location = self.locations[index1][index2]
-                        self.location_index1 = index1
-                        self.location_index2 = index2
-                        self.message = (f"Changing location to {new_location}.")
-                        if len(self.location.enemies) > 0:
-                            self.focus = "battle"
-                            self.mode = "battle"
-                            self.message += ".. ENEMIES!  ENTERING BATTLE MODE!"
-                            self.battle = GroundBattle(self.player, self.location.enemies)
-                    else:
-                        self.message = (f"{new_location} is not adjacent to current location.")
-                    break
-            if found:
-                break
-
-        if found:
-            pass
-        else:
-            self.message = f"Can't go to {new_location}"
+        self.area.goto(new_location)
+        self.message = self.area.message
+        if len(self.area.get_current_location().enemies) > 0:
+            self.focus = "battle"
+            self.mode = "battle"
+            self.warning = ".. ENEMIES!  ENTERING BATTLE MODE!"
+            self.battle = GroundBattle(self.player, self.area.get_current_location())
+        return
 
     def check_adj_locations(self):
 
-        adj_locations = []
-        for index1, row in enumerate(self.locations):
-            for index2, location in enumerate(row):
-                if index1 == self.location_index1 and index2 == self.location_index2:
-                    pass
-                else:
-                    dif1 = abs((index1) - (self.location_index1))
-                    dif2 = abs((index2) - (self.location_index2))
-
-                    if dif1 <= 1 and dif2 <= 1:
-                        adj_locations.append(location)
-
-        return adj_locations
+        return self.area.check_adj_locations()
 
     def display_map(self):
 
-        self.message = "-" * 100 + "\n"
+        self.area.display_map()
+        self.message = self.area.message
 
-        for index1, row in enumerate(self.locations):
-            for index2, location in enumerate(row):
-                if index2 == 0:
-                    self.message += "| "
-                if index1 == self.location_index1 and index2 == self.location_index2:
-                    block = location.name + "*"
-                else:
-                    block = location.name
-                alternator = True
-                while len(block) < 30:
-                    if alternator:
-                        block += " "
-                        alternator = False
-                    else:
-                        block = " " + block
-                        alternator = True
-                self.message += block + " | "
-            self.message += "\n" + "-" * 100 + "\n"
+        return
+    def new_area(self, id):
+
+        self.areas_visited.append(id)
+        self.area = Area("01")
+
+    def dump_area(self):
+
+        if self.area.id in self.areas_visited:
+            pass
+        else:
+            self.areas_visited.append(self.area.id)
+
+        with open(f"game_data/area/{self.area.id}.area","wb") as file:
+            pickle.dump(self.area, file)
+
+    def load_area(self,id):
+
+        with open(f"game_data/area/{id}.area", "rb") as file:
+            self.area = pickle.load(file)

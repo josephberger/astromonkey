@@ -1,10 +1,7 @@
 - description: Not much in here other than a few items.
   name: MonkeyCityHall
   items:
-    - name: bananna
-      type: food
-      description: a tatsy bananna
-      weight: 1
+    - common_item: banana
     - name: bucket
       type: thing
       description: Just a bucket
@@ -27,8 +24,10 @@
       weight: 5
   enemies:
     - type: alien
-- description: Emptry testing room for dropping and throwing
-  name: EmptyRoom01
+    - type: alien
+- description: Not Accessable
+  name: BLOCKED
+  blocked: True
   items: []
 - description: The sprawling library of monkey knowlege
   name: Library
@@ -61,6 +60,7 @@
       type: food
       description: a tatsy bananna
       weight: 1
-- description: A large pad with the rocket for your adventure!
-  name: Rocket
+- description: The launch site of the spaceship.  See if you can go inside and check it out!
+  name: LaunchPad
+  exit: True
   items: []

@@ -1,0 +1,14 @@
+- description: Air lock with two buttons.  Presurize and Depresurize
+  name: Airlock
+  items: []
+  exit: True
+- description: You see many controlls, dials and buttons.  One of which reads "blast off".
+  name: Cockpit
+  items:
+    - common_item: banana
+- description: Cargohold to place the payload in.
+  name: cargohold
+  items: []
+- description: Engine room
+  name: Engine
+  items: []

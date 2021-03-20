@@ -2,7 +2,7 @@ import yaml
 
 class InvItem:
 
-    def __init__(self, name=None, type=None, description=None, weight=None, common_item=None, dmg=None):
+    def __init__(self, name=None, type=None, description=None, weight=None, common_item=None, dmg=None, weapon=False):
 
         if common_item:
 
@@ -13,10 +13,16 @@ class InvItem:
             self.type = type
             self.description = description
             self.weight = weight
+
             if dmg:
                 self.dmg = dmg
             else:
-                dmg = None
+                self.dmg = 0
+
+            if weapon:
+                self.weapon = weapon
+            else:
+                self.weapon = False
 
     def __load_common_item(self, name):
 
@@ -29,3 +35,20 @@ class InvItem:
                 self.type = ci['type']
                 self.description = ci['description']
                 self.weight = ci['weight']
+                self.weapon = ci['weapon']
+                self.dmg = ci['dmg']
+
+    def dump_info(self):
+
+        info = {}
+
+        info['name'] = self.name
+        info['type'] = self.type
+        info['description'] = self.description
+        info['weight'] = self.weight
+        info['dmg'] = self.dmg
+        info['dmg'] = self.dmg
+        info['weapon'] = self.weapon
+        info['False'] = self.weapon
+
+        return info

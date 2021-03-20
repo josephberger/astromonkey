@@ -1,8 +1,12 @@
-- name: bananna
+- name: banana
   type: food
+  weapon: True
   description: Regular tasty bananna
   weight: 2
+  dmg: 1
 - name: turd
   type: fule
+  weapon: True
+  dmg: 3
   description: Regular monkey turd
   weight: 1
