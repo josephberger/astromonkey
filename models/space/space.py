@@ -1,50 +1,61 @@
 import yaml
-from models.location import Location
+from ..space.tile import Tile
+import random
 
-class Area:
+class SpaceMode:
 
     def __init__(self, id):
 
-        self.locations = []
+        self.tiles = []
         self.id = id
-        with open(f"data/map/areas/{id}/info.yaml","r") as file:
-            info = yaml.full_load(file.read())
+        self.name = "space"
+        self.description = "The final frontier"
 
-        self.name = info['name']
-        self.description = info['description']
+        with open(f"data/map/space/manditory.yaml","r") as file:
+            manditory = yaml.full_load(file.read())
+        with open(f"data/map/space/random.yaml","r") as file:
+            common = yaml.full_load(file.read())
 
-        with open(f"data/map/areas/{id}/locations.yaml","r") as file:
-            yaml_locations = yaml.full_load(file.read())
+        tiles = []
+        for tile in manditory:
+            tiles.append(tile)
+        for i in range (len(manditory), 36):
+            index = random.randint(0,len(common)-1)
+            tiles.append(common[index])
 
-        location_row = []
+        tile_row = []
 
-        for l in yaml_locations:
-            if len(location_row) < int(info['length']):
-                location_row.append(Location(**l))
+        while len(tiles) > 0:
+            index = random.randint(1, len(tiles)) - 1
+            if len(tile_row) < 6:
+                tile_row.append(Tile(**tiles[index]))
+                tiles.remove(tiles[index])
             else:
-                self.locations.append(location_row)
-                location_row = []
-                location_row.append(Location(**l))
+                self.tiles.append(tile_row)
+                tile_row = []
+                tile_row.append(Tile(**tiles[index]))
+                tiles.remove(tiles[index])
 
-        self.locations.append(location_row)
 
-        self.location_index = [0,0]
+        self.tiles.append(tile_row)
+
+        self.tile_index = [0,0]
 
     def goto(self, new_location):
 
         found = False
 
-        for index1, row in enumerate(self.locations):
+        for index1, row in enumerate(self.tiles):
             for index2, location in enumerate(row):
                 if new_location.upper() == location.name.upper():
                     found = True
-                    if self.locations[index1][index2] in self.check_adj_locations():
-                        if self.locations[index1][index2].blocked:
+                    if self.tiles[index1][index2] in self.check_adj_locations():
+                        if self.tiles[index1][index2].blocked:
                             self.message = (f"{new_location} is not accessable.")
                             break
                         else:
-                            self.location_index[0] = index1
-                            self.location_index[1] = index2
+                            self.tile_index[0] = index1
+                            self.tile_index[1] = index2
                             self.message = (f"Changing location to {new_location}.")
                     else:
                         self.message = (f"{new_location} is not adjacent to current location.")
@@ -59,19 +70,19 @@ class Area:
 
     def update_location(self,location):
 
-        self.locations[self.location_index[0]][self.location_index[1]] = location
+        self.tiles[self.tile_index[0]][self.tile_index[1]] = location
         return True
 
     def check_adj_locations(self):
 
         adj_locations = []
-        for index1, row in enumerate(self.locations):
+        for index1, row in enumerate(self.tiles):
             for index2, location in enumerate(row):
-                if index1 == self.location_index[0] and index2 == self.location_index[1]:
+                if index1 == self.tile_index[0] and index2 == self.tile_index[1]:
                     pass
                 else:
-                    dif1 = abs((index1) - (self.location_index[0]))
-                    dif2 = abs((index2) - (self.location_index[1]))
+                    dif1 = abs((index1) - (self.tile_index[0]))
+                    dif2 = abs((index2) - (self.tile_index[1]))
 
                     if dif1 <= 1 and dif2 <= 1:
                         adj_locations.append(location)
@@ -80,15 +91,15 @@ class Area:
 
     def check_item(self, item):
 
-        for index, location_item in enumerate(self.locations[self.location_index[0]][self.location_index[1]].items):
+        for index, location_item in enumerate(self.tiles[self.tile_index[0]][self.tile_index[1]].items):
             if item == location_item.name:
-                return self.locations[self.location_index[0]][self.location_index[1]].items[index]
+                return self.tiles[self.tile_index[0]][self.tile_index[1]].items[index]
 
         return False
 
     def add_item(self, item):
 
-        self.locations[self.location_index[0]][self.location_index[1]].items.append(item)
+        self.tiles[self.tile_index[0]][self.tile_index[1]].items.append(item)
 
     def remove_item(self, item):
 
@@ -96,7 +107,7 @@ class Area:
 
         if location_item:
 
-            self.locations[self.location_index[0]][self.location_index[1]].items.remove(location_item)
+            self.tiles[self.tile_index[0]][self.tile_index[1]].items.remove(location_item)
             self.message = f"Removed {item}"
             return location_item
 
@@ -106,18 +117,18 @@ class Area:
 
     def get_current_location(self):
 
-        return self.locations[self.location_index[0]][self.location_index[1]]
+        return self.tiles[self.tile_index[0]][self.tile_index[1]]
 
     def display_map(self):
 
         rows = []
-        for index1, row in enumerate(self.locations):
+        for index1, row in enumerate(self.tiles):
             tiles = []
             for index2, location in enumerate(row):
                 tile = ""
                 if index2 == 0:
                     tile += "| "
-                if index1 == self.location_index[0] and index2 == self.location_index[1]:
+                if index1 == self.tile_index[0] and index2 == self.tile_index[1]:
                     block = "*" + location.name
                 else:
                     block = location.name
@@ -126,7 +137,7 @@ class Area:
                     block += "+"
 
                 alternator = True
-                while len(block) < 30:
+                while len(block) < 16:
                     if alternator:
                         block += " "
                         alternator = False
@@ -137,19 +148,25 @@ class Area:
                 tiles.append(tile)
             rows.append(tiles)
 
-        self.message = "-" * (len(rows[0])*33+1) + "\n"
+        self.message = "-" * (len(rows[0])*19) + "-\n"
 
         for row in rows:
+            for i in row:
+                self.message += "|" + (" " * 18)
+            self.message += "|\n"
             for tile in row:
                 self.message += tile
             self.message +="\n"
-            self.message += "-" * (len(rows[0]) * 33 + 1) + "\n"
+            for i in row:
+                self.message += "|" + (" " * 18)
+            self.message += "|\n"
+            self.message += "-" * (len(row)*19) + "-\n"
         self.message += "Lgend:\n+ Exit Location\n* Player Location"
         return True
 
     def __str__(self):
         location_count = 0
-        for loc in self.locations:
+        for loc in self.tiles:
             for l in loc:
                 location_count += 1
 
@@ -157,7 +174,7 @@ class Area:
 
     def __repr__(self):
         location_count = 0
-        for loc in self.locations:
+        for loc in self.tiles:
             for l in loc:
                 location_count += 1
 

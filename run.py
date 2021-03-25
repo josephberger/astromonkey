@@ -1,3 +1,3 @@
-from engine import story
+from engine import console
 
-story.start()
+console.start()

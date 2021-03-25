@@ -15,9 +15,8 @@ class GroundBattle:
         self.action = []
         self.passive = False
         self.defeated_enemies = []
-
-    def start(self):
-        pass
+        self.animation = None
+        self.change_mode = None
 
     def run(self, action):
 
@@ -81,6 +80,7 @@ class GroundBattle:
             if thrown:
                 self.location.enemies[self.target].health -= thrown.dmg
                 self.player_message = f"{at_object} thrown at {self.location.enemies[self.target].name} for {thrown.dmg} damage!"
+                self.animation = "target hit"
             else:
                 self.player_message = self.player.message
 
@@ -110,12 +110,19 @@ class GroundBattle:
                 if index == self.target:
                     self.target = -1
                 self.message += f"{enemy.name} killed!\n"
+                self.animation = "enemy killed"
                 self.location.items.append(InvItem(common_item="banana"))
                 self.defeated_enemies.append(self.location.enemies[index])
                 self.location.enemies.remove(self.location.enemies[index])
 
         if len(self.location.enemies) == 0:
             self.over = True
+            self.change_mode = "ground"
+            self.message = self.get_battle_stats()
+        if self.player.health <= 0:
+            self.over = True
+            self.change_mode = "ground"
+            self.message = self.get_battle_stats()
 
     def get_battle_stats(self):
 

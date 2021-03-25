@@ -4,9 +4,9 @@ class JoJo():
     def __init__(self, name="JoJo",):
 
         self.name = name
-        self.health = 100
+        self.health = 40
         self.inventory = [InvItem(common_item="turd"), InvItem(common_item="turd"), InvItem(common_item="turd")]
-        self.oxygen = 100
+        self.oxygen = 40
         self.message = "Lets go!"
         self.carry_weight = 10
 
@@ -65,7 +65,7 @@ class JoJo():
 
     def add_item(self,item):
 
-        if item.weight + self.check_inv_weight() < self.carry_weight:
+        if item.weight + self.check_inv_weight() <= self.carry_weight:
             self.inventory.append(item)
             self.message = f"Added {item.name} to inventory."
             return True
